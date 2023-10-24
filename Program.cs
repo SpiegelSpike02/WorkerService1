@@ -3,19 +3,28 @@ using Polly;
 using Quartz;
 using System.Net;
 using WorkerService1.Contexts;
+using WorkerService1.Jobs;
 
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((HostBuilderContext hostContext, IServiceCollection services) =>
     {
         services.AddDbContextFactory<ERPContext>(options =>
         {
-            options.UseSqlServer(hostContext.Configuration.GetConnectionString("DefaultConnectionString"));
+            options.UseMySQL(hostContext.Configuration.GetConnectionString("DefaultConnectionString")!);
             options.EnableSensitiveDataLogging();
         });
 
+
         services.AddQuartz(q =>
         {
-
+            q.ScheduleJob<HHJob>(trigger =>
+            {
+                trigger.WithIdentity("AYTrigger").StartNow().WithSimpleSchedule(delegate (SimpleScheduleBuilder x)
+                {
+                    x.WithIntervalInHours(3).RepeatForever();
+                })
+                    .WithDescription("my awesome trigger configured for a job with single call");
+            });
         });
 
         services.AddQuartzHostedService(options =>

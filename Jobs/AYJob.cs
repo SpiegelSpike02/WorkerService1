@@ -1,13 +1,7 @@
 // WorkerService1, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
 // WorkerService1.Jobs.AYJob
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Net.Http;
 using System.Text.Json.Nodes;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
 using WorkerService1.Contexts;
@@ -47,10 +41,10 @@ namespace WorkerService1.Jobs
                 using HttpClient client = _httpClientFactory.CreateClient("AY");
                 FormUrlEncodedContent form = new(new KeyValuePair<string, string>[4]
                 {
-                new KeyValuePair<string, string>("validateToken", "eecbebd1e028941d6e1966be53f8afc2"),
-                new KeyValuePair<string, string>("username", "ay012392"),
-                new KeyValuePair<string, string>("password", "jxy15805249769"),
-                new KeyValuePair<string, string>("validateCode", "")
+                new("validateToken", "eecbebd1e028941d6e1966be53f8afc2"),
+                new("username", "ay012392"),
+                new("password", "jxy15805249769"),
+                new("validateCode", "")
                 });
                 await client.PostAsync("front/loginapi/login", form);
                 JsonNode jsonNode = JsonNode.Parse(await (await client.GetAsync("front/goods/api/goodslist?keyword=&storeId=&brandId=&gcId=&goodsSpec=&arrivalCycle=&sortField=&sortOrder=&dosageForm=&maximumPrice=&minimumPrice=&pageSize=12&pageNo=1&activityId=&prdId=")).Content.ReadAsStringAsync());
@@ -63,12 +57,12 @@ namespace WorkerService1.Jobs
                 {
                     jsonNode = JsonNode.Parse(await (await client.GetAsync($"front/goods/api/goodslist?keyword=&storeId=&brandId=&gcId=&goodsSpec=&arrivalCycle=&sortField=&sortOrder=&dosageForm=&maximumPrice=&minimumPrice=&pageSize=12&pageNo={pageNum}&activityId=&prdId=")).Content.ReadAsStringAsync());
                     JsonArray jsonArray = (JsonArray)jsonNode["data"][0]["listApiGoods"];
-                    List<Product> productList = new List<Product>(jsonArray.Count);
-                    await Parallel.ForEachAsync(jsonArray, async delegate (JsonNode node, CancellationToken CancellationToken)
+                    List<Product> productList = new(jsonArray.Count);
+                    await Parallel.ForEachAsync(jsonArray, async (node, CancellationToken) =>
                     {
                         string Id = node["goodsId"].ToString();
-                        JsonNode infoJsonNode = JsonNode.Parse(await client.GetStringAsync("front/goods/api/getGoodsById?goodsId=" + Id, CancellationToken))["data"][0];
-                        Product product = new Product
+                        JsonNode infoJsonNode = JsonNode.Parse(await client.GetStringAsync("front/goods/api/getGoodsById?goodsId=" + Id, CancellationToken))!["data"]![0]!;
+                        Product product = new()
                         {
                             Id = "JXYSQS" + AY.Id + Id,
                             Approval = infoJsonNode["approvalNumber"].ToString(),
@@ -79,7 +73,7 @@ namespace WorkerService1.Jobs
                             Price = (decimal)infoJsonNode["taxPrice"],
                             StockAmount = (int)infoJsonNode["goodsTotalStorage"],
                             BigPack = (int)infoJsonNode["packBig"],
-                            MidPack = (int)infoJsonNode["packNum"],
+                            MidPack = (int)infoJsonNode["packNum"]!,
                             Url = "https://ec.ayyywl.com/goodsDetail/" + Id,
                             PlatformId = AY.Id,
                             SellTip = string.Empty,
