@@ -1,19 +1,10 @@
 ﻿using HtmlAgilityPack;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
-using OpenQA.Selenium;
-using OpenQA.Selenium.Edge;
 using Quartz;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
-using System.Net;
-using System.Text;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using WorkerService1.Contexts;
 using WorkerService1.Models;
 
@@ -34,14 +25,10 @@ namespace WorkerService1.Jobs
 
         public async Task Execute(IJobExecutionContext context)
         {
-            
             try
             {
-                EdgeOptions edgeOptions = new() { PageLoadStrategy = PageLoadStrategy.Normal };
-                edgeOptions.AddArgument("--headless=new");
-                EdgeDriver driver = new(edgeOptions);
                 using ERPContext _context = await _ERPContextFactory.CreateDbContextAsync();
-                Models.Platform HH = new()
+                Platform HH = new()
                 {
                     Id = 4,
                     Name = "淮海"
@@ -51,34 +38,8 @@ namespace WorkerService1.Jobs
                     await _context.Platforms.AddAsync(HH);
                     await _context.SaveChangesAsync();
                 }
-//                using HttpClient client = _httpClientFactory.CreateClient("HH");
-                driver.Navigate().GoToUrl("https://hhey.shaphar.com/");
-                var userName = driver.FindElement(By.XPath("//*[@id=\"userName\"]"));
-                userName.SendKeys("xzhx");
-                var password = driver.FindElement(By.XPath("//*[@id=\"password\"]"));
-                password.SendKeys("123456");
-                var logInButton = driver.FindElement(By.XPath("//*[@id=\"btn_sub\"]"));
-                logInButton.Click();
-                Thread.Sleep(5000);
-                CookieContainer cookieContainer = new();
-                foreach (var cookie in driver.Manage().Cookies.AllCookies)
-                {
-                    cookieContainer.Add(new System.Net.Cookie()
-                    {
-                        Name = cookie.Name,
-                        Value = cookie.Value,
-                        Domain = cookie.Domain,
-                        Path = cookie.Path,
-                        Secure = cookie.Secure,
-                    });
-                }
-                driver.Quit();
-                var handler = new SocketsHttpHandler()
-                {
-                    CookieContainer = cookieContainer,
-                    UseCookies = true
-                };
-                var client = new HttpClient(handler);
+
+                using HttpClient client = _httpClientFactory.CreateClient("HH");
                 var content = new FormUrlEncodedContent(new KeyValuePair<string, string>[]
                 {
                      new ("action", "VSCommon.urlRequest"),
@@ -89,7 +50,7 @@ namespace WorkerService1.Jobs
                 if (int.TryParse(_["totals"].ToString(), out int _totalNum))
                 {
                     Console.WriteLine(_totalNum);
-                    var pageNum = 1;
+                    var pageNum = 144;
                     while (_context.Products.Where(x => x.PlatformId == 4).Count() < _totalNum)
                     {
                         content = new FormUrlEncodedContent(new KeyValuePair<string, string>[]

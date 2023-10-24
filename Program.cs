@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using WorkerService1.Utilities;
 using Polly;
 using Quartz;
 using System.Net;
@@ -14,29 +15,12 @@ IHost host = Host.CreateDefaultBuilder(args)
             options.EnableSensitiveDataLogging();
         });
 
-
-        services.AddQuartz(q =>
-        {
-            q.ScheduleJob<HHJob>(trigger =>
-            {
-                trigger.WithIdentity("AYTrigger").StartNow().WithSimpleSchedule(delegate (SimpleScheduleBuilder x)
-                {
-                    x.WithIntervalInHours(3).RepeatForever();
-                })
-                    .WithDescription("my awesome trigger configured for a job with single call");
-            });
-        });
-
-        services.AddQuartzHostedService(options =>
-        {
-            options.WaitForJobsToComplete = true;
-        });
-
         SocketsHttpHandler defaultHandler = new()
         {
             AllowAutoRedirect = true,
             AutomaticDecompression = DecompressionMethods.GZip,
-            ConnectTimeout = TimeSpan.FromSeconds(600.0)
+            ConnectTimeout = TimeSpan.FromSeconds(600.0),
+            CookieContainer = HHCookieService.GetHHCookie()
         };
 
         var timeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(10));
@@ -69,6 +53,23 @@ IHost host = Host.CreateDefaultBuilder(args)
         {
             client.BaseAddress = new Uri("https://hhey.shaphar.com");
         }).AddPolicyHandlerFromRegistry("Regular").ConfigurePrimaryHttpMessageHandler(() => defaultHandler);
+
+        services.AddQuartz(q =>
+        {
+            q.ScheduleJob<HHJob>(trigger =>
+            {
+                trigger.WithIdentity("AYTrigger").StartNow().WithSimpleSchedule(x =>
+                {
+                    x.WithIntervalInHours(3).RepeatForever();
+                })
+                    .WithDescription("my awesome trigger configured for a job with single call");
+            });
+        });
+
+        services.AddQuartzHostedService(options =>
+        {
+            options.WaitForJobsToComplete = true;
+        });
     })
     .Build();
 
