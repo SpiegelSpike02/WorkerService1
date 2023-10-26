@@ -1,15 +1,9 @@
 // WorkerService1, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
 // WorkerService1.Jobs.AYJob
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Net.Http;
-using System.Text.Json.Nodes;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
+using System.Globalization;
+using System.Text.Json.Nodes;
 using WorkerService1.Contexts;
 using WorkerService1.Models;
 
@@ -95,15 +89,21 @@ namespace WorkerService1.Jobs
                         }
                         productList.Add(product);
                     });
-                    foreach (Product item in productList)
+                    foreach (var product in productList)
                     {
-                        if (_context.Products.Contains(item))
+                        if (_context.Products.AsNoTracking().Any(x => x.Id.Equals(product.Id)))
                         {
-                            _context.Products.Update(item);
+                            var _product = _context.Products.First(x => x.Id.Equals(product.Id));
+                            _product.Expiry = product.Expiry;
+                            _product.Price = product.Price;
+                            _product.Approval = product.Approval;
+                            _product.ProductDate = product.ProductDate;
+                            _product.StockAmount = product.StockAmount;
+                            _product.Url = _product.Url;
                         }
                         else
                         {
-                            _context.Products.Add(item);
+                            _context.Products.Add(product);
                         }
                     }
                     _context.SaveChanges();

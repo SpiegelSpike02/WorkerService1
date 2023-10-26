@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using WorkerService1.Utilities;
 using Polly;
 using Quartz;
 using System.Net;
@@ -15,50 +14,61 @@ IHost host = Host.CreateDefaultBuilder(args)
             options.EnableSensitiveDataLogging();
         });
 
-        SocketsHttpHandler defaultHandler = new()
+        services.AddDbContextFactory<ERPContext>(options =>
         {
-            AllowAutoRedirect = true,
-            AutomaticDecompression = DecompressionMethods.GZip,
-            ConnectTimeout = TimeSpan.FromSeconds(600.0),
-            CookieContainer = HHCookieService.GetHHCookie()
-        };
-
-        var timeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(10));
-
-        var policyRegistry = services.AddPolicyRegistry();
-
-        policyRegistry.Add("Regular", timeoutPolicy);
-
-        services.AddHttpClient("LQ", client =>
-        {
-            client.BaseAddress = new Uri("http://www.sdlqyy.cn");
-        }).AddPolicyHandlerFromRegistry("Regular").ConfigurePrimaryHttpMessageHandler(() => defaultHandler);
-
-        services.AddHttpClient("AY", client =>
-        {
-            client.BaseAddress = new Uri("https://ec.ayyywl.com");
-        }).AddPolicyHandlerFromRegistry("Regular").ConfigurePrimaryHttpMessageHandler(() => defaultHandler);
-
-        services.AddHttpClient("YB", client =>
-        {
-            client.BaseAddress = new Uri("https://www.jzybyy.com");
-        }).AddPolicyHandlerFromRegistry("Regular").ConfigurePrimaryHttpMessageHandler(() => defaultHandler);
-
-        services.AddHttpClient("HF", client =>
-        {
-            client.BaseAddress = new Uri("http://ds.lyhfyy.com");
-        }).AddPolicyHandlerFromRegistry("Regular").ConfigurePrimaryHttpMessageHandler(() => defaultHandler);
-
-        services.AddHttpClient("HH", client =>
-        {
-            client.BaseAddress = new Uri("https://hhey.shaphar.com");
-        }).AddPolicyHandlerFromRegistry("Regular").ConfigurePrimaryHttpMessageHandler(() => defaultHandler);
+            options.EnableSensitiveDataLogging();
+        });
 
         services.AddQuartz(q =>
         {
-            q.ScheduleJob<HHJob>(trigger =>
+            q.ScheduleJob<AYJob>(trigger =>
             {
                 trigger.WithIdentity("AYTrigger").StartNow().WithSimpleSchedule(x =>
+                {
+                    x.WithIntervalInHours(3).RepeatForever();
+                })
+                    .WithDescription("my awesome trigger configured for a job with single call");
+            });
+
+            q.ScheduleJob<YBJob>(trigger =>
+            {
+                trigger.WithIdentity("YBTrigger").StartNow().WithSimpleSchedule(x =>
+                {
+                    x.WithIntervalInHours(3).RepeatForever();
+                })
+                    .WithDescription("my awesome trigger configured for a job with single call");
+            });
+
+            q.ScheduleJob<HHJob>(trigger =>
+            {
+                trigger.WithIdentity("HHTrigger").StartNow().WithSimpleSchedule(x =>
+                {
+                    x.WithIntervalInHours(3).RepeatForever();
+                })
+                    .WithDescription("my awesome trigger configured for a job with single call");
+            });
+
+            q.ScheduleJob<HFJob>(trigger =>
+            {
+                trigger.WithIdentity("HFTrigger").StartNow().WithSimpleSchedule(x =>
+                {
+                    x.WithIntervalInHours(3).RepeatForever();
+                })
+                    .WithDescription("my awesome trigger configured for a job with single call");
+            });
+
+            q.ScheduleJob<LQJob>(trigger =>
+            {
+                trigger.WithIdentity("LQTrigger").StartNow().WithSimpleSchedule(x =>
+                {
+                    x.WithIntervalInHours(3).RepeatForever();
+                })
+                    .WithDescription("my awesome trigger configured for a job with single call");
+            });
+
+            q.ScheduleJob<SyncJob>(trigger =>
+            {
+                trigger.WithIdentity("SyncTrigger").StartNow().WithSimpleSchedule(x =>
                 {
                     x.WithIntervalInHours(3).RepeatForever();
                 })
@@ -69,6 +79,62 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddQuartzHostedService(options =>
         {
             options.WaitForJobsToComplete = true;
+        });
+
+        var timeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(10));
+
+        var policyRegistry = services.AddPolicyRegistry();
+
+        policyRegistry.Add("Regular", timeoutPolicy);
+
+        services.AddHttpClient("LQ", client =>
+        {
+            client.BaseAddress = new Uri("http://www.sdlqyy.cn");
+        }).AddPolicyHandlerFromRegistry("Regular").ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler()
+        {
+            AllowAutoRedirect = true,
+            AutomaticDecompression = DecompressionMethods.GZip,
+            ConnectTimeout = TimeSpan.FromSeconds(600.0)
+        });
+
+        services.AddHttpClient("AY", client =>
+        {
+            client.BaseAddress = new Uri("https://ec.ayyywl.com");
+        }).AddPolicyHandlerFromRegistry("Regular").ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler()
+        {
+            AllowAutoRedirect = true,
+            AutomaticDecompression = DecompressionMethods.GZip,
+            ConnectTimeout = TimeSpan.FromSeconds(600.0)
+        });
+
+        services.AddHttpClient("YB", client =>
+        {
+            client.BaseAddress = new Uri("https://www.jzybyy.com");
+        }).AddPolicyHandlerFromRegistry("Regular").ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler()
+        {
+            AllowAutoRedirect = true,
+            AutomaticDecompression = DecompressionMethods.GZip,
+            ConnectTimeout = TimeSpan.FromSeconds(600.0)
+        });
+
+        services.AddHttpClient("HF", client =>
+        {
+            client.BaseAddress = new Uri("http://ds.lyhfyy.com");
+        }).AddPolicyHandlerFromRegistry("Regular").ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler()
+        {
+            AllowAutoRedirect = true,
+            AutomaticDecompression = DecompressionMethods.GZip,
+            ConnectTimeout = TimeSpan.FromSeconds(600.0)
+        });
+
+        services.AddHttpClient("HH", client =>
+        {
+            client.BaseAddress = new Uri("https://hhey.shaphar.com");
+        }).AddPolicyHandlerFromRegistry("Regular").ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler()
+        {
+            AllowAutoRedirect = true,
+            AutomaticDecompression = DecompressionMethods.GZip,
+            ConnectTimeout = TimeSpan.FromSeconds(600.0)
         });
     })
     .Build();
