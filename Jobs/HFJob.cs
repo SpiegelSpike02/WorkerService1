@@ -3,13 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Edge;
 using Quartz;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
-using System.Reflection.Metadata;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 using WorkerService1.Contexts;
 using WorkerService1.Models;
 
@@ -36,10 +33,10 @@ namespace WorkerService1.Jobs
                 Id = 5,
                 Name = "洪福"
             };
-            if (!await _context.Platforms.ContainsAsync(HF))
+            if (!_context.Platforms.Contains(HF))
             {
-                await _context.Platforms.AddAsync(HF);
-                await _context.SaveChangesAsync();
+                _context.Platforms.Add(HF);
+                _context.SaveChanges();
             }
             EdgeOptions edgeOptions = new() { PageLoadStrategy = PageLoadStrategy.Normal };
             edgeOptions.AddArgument("--headless=new");
@@ -93,11 +90,11 @@ namespace WorkerService1.Jobs
                         Approval = document.DocumentNode.SelectSingleNode("//*[@id=\"pzwh\"]").InnerText,
                         Specs = document.DocumentNode.SelectSingleNode("//*[@id=\"gg\"]").InnerText,
                         Url = link.ToString(),
-                        SaleTip = string.Empty,
-                        SellTip = string.Empty,
+                        Message = string.Empty,
                         MidPack = 1,
                         PlatformId = HF.Id,
-                        ProductDate = null
+                        ProductDate = null,
+                        IsBanned = false
                     };
                     string priceText = AYRegex1().Replace(document.DocumentNode.SelectSingleNode("//*[@id=\"jg\"]/div[1]/div/span[2]").InnerText, "");
                     if (priceText != null && decimal.TryParse(priceText, out var _price))
@@ -110,7 +107,7 @@ namespace WorkerService1.Jobs
                         product2.StockAmount = _stockAmount;
                     }
                     string expiryText = document.DocumentNode.SelectSingleNode("//*[@id=\"yxqz\"]").InnerText;
-                    if (expiryText != null && DateTime.TryParseExact(expiryText, "yyyy-MM-dd", CultureInfo.CurrentCulture, DateTimeStyles.None, out var _expiry))
+                    if (expiryText != null && DateOnly.TryParseExact(expiryText, "yyyy-MM-dd", CultureInfo.CurrentCulture, DateTimeStyles.None, out var _expiry))
                     {
                         product2.Expiry = _expiry;
                     }
@@ -134,6 +131,8 @@ namespace WorkerService1.Jobs
                         _product.ProductDate = product.ProductDate;
                         _product.StockAmount = product.StockAmount;
                         _product.Url = _product.Url;
+                        _product.Message = product.Message;
+                        _product.IsBanned = product.IsBanned;
                     }
                     else
                     {

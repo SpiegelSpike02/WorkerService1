@@ -1,11 +1,19 @@
 using Microsoft.EntityFrameworkCore;
 using Polly;
 using Quartz;
+using Serilog;
 using System.Net;
 using WorkerService1.Contexts;
 using WorkerService1.Jobs;
 
+Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.Console()
+            .WriteTo.File("logs/myapp.txt", rollingInterval: RollingInterval.Day, restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Error)
+            .CreateLogger();
+
 IHost host = Host.CreateDefaultBuilder(args)
+    .UseSerilog()
     .ConfigureServices((HostBuilderContext hostContext, IServiceCollection services) =>
     {
         services.AddDbContextFactory<ERPContext>(options =>
@@ -14,13 +22,13 @@ IHost host = Host.CreateDefaultBuilder(args)
             options.EnableSensitiveDataLogging();
         });
 
-        services.AddDbContextFactory<ERPContext>(options =>
+        services.AddDbContextFactory<KSOAContext>(options =>
         {
             options.EnableSensitiveDataLogging();
         });
-
         services.AddQuartz(q =>
         {
+
             q.ScheduleJob<AYJob>(trigger =>
             {
                 trigger.WithIdentity("AYTrigger").StartNow().WithSimpleSchedule(x =>

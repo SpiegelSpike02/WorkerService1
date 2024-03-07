@@ -10,32 +10,22 @@ using WorkerService1.Models;
 namespace WorkerService1.Jobs
 {
     [DisallowConcurrentExecution]
-    public class LQJob : IJob
+    public class LQJob(IHttpClientFactory httpClientFactory, IDbContextFactory<ERPContext> ERPContextFactory) : IJob
     {
-        private readonly IHttpClientFactory _httpClientFactory;
-
-        private readonly IDbContextFactory<ERPContext> _ERPContextFactory;
-
-        public LQJob(IHttpClientFactory httpClientFactory, IDbContextFactory<ERPContext> ERPContextFactory)
-        {
-            _httpClientFactory = httpClientFactory;
-            _ERPContextFactory = ERPContextFactory;
-        }
-
         public async Task Execute(IJobExecutionContext context)
         {
-            using ERPContext _context = await _ERPContextFactory.CreateDbContextAsync();
+            using ERPContext _context = await ERPContextFactory.CreateDbContextAsync();
             Platform LQ = new()
             {
                 Id = 6,
                 Name = "立强"
             };
-            if (!(await _context.Platforms.ContainsAsync(LQ)))
+            if (!_context.Platforms.Contains(LQ))
             {
-                await _context.Platforms.AddAsync(LQ);
-                await _context.SaveChangesAsync();
+                _context.Platforms.Add(LQ);
+                _context.SaveChanges();
             }
-            using HttpClient client = _httpClientFactory.CreateClient("LQ");
+            using HttpClient client = httpClientFactory.CreateClient("LQ");
             FormUrlEncodedContent content = new(new KeyValuePair<string, string>[3]
                 {
                 new KeyValuePair<string, string>("username", "14639"),
@@ -64,12 +54,15 @@ namespace WorkerService1.Jobs
                     HtmlNodeCollection infos2 = innerDoc2.DocumentNode.SelectNodes("/html/body/div[4]/div/div[1]/div[2]/div");
                     Product product5 = new()
                     {
-                        Id = "JXYSQS6" + innerDoc2.DocumentNode.SelectSingleNode("/html/body/div[4]/div/div[2]/div[2]/div[2]/ul/li[1]").InnerText.Remove(0, 5),
+                        Id = "JXYSQS" + LQ.Id + innerDoc2.DocumentNode.SelectSingleNode("/html/body/div[4]/div/div[2]/div[2]/div[2]/ul/li[1]").InnerText.Remove(0, 5),
                         Name = ((innerDoc2.DocumentNode.SelectSingleNode("/html/body/div[4]/div/div[1]/div[2]/h1") != null) ? innerDoc2.DocumentNode.SelectSingleNode("/html/body/div[4]/div/div[1]/div[2]/h1").InnerText : "无"),
-                        PlatformId = 6,
+                        PlatformId = LQ.Id,
                         Url = client.BaseAddress?.ToString() + url2,
-                        SellTip = string.Empty,
-                        SaleTip = string.Empty
+                        Message = string.Empty,
+                        Approval = string.Empty,
+                        Specs = string.Empty,
+                        IsBanned = false,
+                        ProducerName = string.Empty
                     };
                     foreach (HtmlNode info2 in infos2)
                     {
@@ -131,7 +124,7 @@ namespace WorkerService1.Jobs
                                 break;
                             case "生产日期：":
                                 {
-                                    if (DateTime.TryParseExact(info2.NextSibling.InnerText, "yyyy-MM-dd", CultureInfo.CurrentCulture, DateTimeStyles.None, out var _productdate2))
+                                    if (DateOnly.TryParseExact(info2.NextSibling.InnerText, "yyyy-MM-dd", CultureInfo.CurrentCulture, DateTimeStyles.None, out var _productdate2))
                                     {
                                         product5.ProductDate = _productdate2;
                                     }
@@ -143,7 +136,7 @@ namespace WorkerService1.Jobs
                                 }
                             case "有 效 期：":
                                 {
-                                    if (DateTime.TryParseExact(info2.NextSibling.InnerText, "yyyy年MM月", CultureInfo.CurrentCulture, DateTimeStyles.None, out var _expiry2))
+                                    if (DateOnly.TryParseExact(info2.NextSibling.InnerText, "yyyy年MM月", CultureInfo.CurrentCulture, DateTimeStyles.None, out var _expiry2))
                                     {
                                         product5.Expiry = _expiry2;
                                     }
@@ -157,7 +150,7 @@ namespace WorkerService1.Jobs
                                 product5.Specs = info2.NextSibling.InnerText ?? "无";
                                 break;
                             case "优惠信息：":
-                                product5.SaleTip = info2.NextSibling.InnerText;
+                                product5.Message = info2.NextSibling.InnerText;
                                 break;
                         }
                     }
@@ -174,6 +167,8 @@ namespace WorkerService1.Jobs
                         _product.ProductDate = product.ProductDate;
                         _product.StockAmount = product.StockAmount;
                         _product.Url = _product.Url;
+                        _product.Message = product.Message;
+                        _product.IsBanned = product.IsBanned;
                     }
                     else
                     {

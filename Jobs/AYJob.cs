@@ -1,5 +1,3 @@
-// WorkerService1, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-// WorkerService1.Jobs.AYJob
 using Microsoft.EntityFrameworkCore;
 using Quartz;
 using System.Globalization;
@@ -10,23 +8,13 @@ using WorkerService1.Models;
 namespace WorkerService1.Jobs
 {
     [DisallowConcurrentExecution]
-    public class AYJob : IJob
+    public class AYJob(IHttpClientFactory httpClientFactory, IDbContextFactory<ERPContext> ERPContextFactory) : IJob
     {
-        private readonly IHttpClientFactory _httpClientFactory;
-
-        private readonly IDbContextFactory<ERPContext> _ERPContextFactory;
-
-        public AYJob(IHttpClientFactory httpClientFactory, IDbContextFactory<ERPContext> ERPContextFactory)
-        {
-            _httpClientFactory = httpClientFactory;
-            _ERPContextFactory = ERPContextFactory;
-        }
-
         public async Task Execute(IJobExecutionContext context)
         {
             try
             {
-                using ERPContext _context = await _ERPContextFactory.CreateDbContextAsync();
+                using ERPContext _context = await ERPContextFactory.CreateDbContextAsync();
                 Platform AY = new()
                 {
                     Id = 7,
@@ -38,7 +26,7 @@ namespace WorkerService1.Jobs
                     await _context.SaveChangesAsync();
                 }
 
-                using HttpClient client = _httpClientFactory.CreateClient("AY");
+                using HttpClient client = httpClientFactory.CreateClient("AY");
                 FormUrlEncodedContent form = new(new KeyValuePair<string, string>[4]
                 {
                 new("validateToken", "eecbebd1e028941d6e1966be53f8afc2"),
@@ -76,10 +64,10 @@ namespace WorkerService1.Jobs
                             MidPack = (int)infoJsonNode["packNum"]!,
                             Url = "https://ec.ayyywl.com/goodsDetail/" + Id,
                             PlatformId = AY.Id,
-                            SellTip = string.Empty,
-                            SaleTip = string.Empty
+                            Message = string.Empty,
+                            IsBanned = false
                         };
-                        if (infoJsonNode["endDateStr"] != null && DateTime.TryParseExact(infoJsonNode["endDateStr"].ToString().Remove(10, 11), "yyyy-MM-dd", CultureInfo.CurrentCulture, DateTimeStyles.None, out var expiry))
+                        if (infoJsonNode["endDateStr"] != null && DateOnly.TryParseExact(infoJsonNode["endDateStr"].ToString().Remove(10, 11), "yyyy-MM-dd", CultureInfo.CurrentCulture, DateTimeStyles.None, out var expiry))
                         {
                             product.Expiry = expiry;
                         }
@@ -100,6 +88,8 @@ namespace WorkerService1.Jobs
                             _product.ProductDate = product.ProductDate;
                             _product.StockAmount = product.StockAmount;
                             _product.Url = _product.Url;
+                            _product.Message = product.Message;
+                            _product.IsBanned = product.IsBanned;
                         }
                         else
                         {

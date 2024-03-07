@@ -6,15 +6,15 @@ namespace WorkerService1.Models
     public class Product
     {
         [Key]
-        public string Id { get; set; }
+        public required string Id { get; set; }
 
-        public string Name { get; set; }
+        public required string Name { get; set; }
 
-        public string Approval { get; set; }
+        public required string Approval { get; set; }
 
-        public string Specs { get; set; }
+        public required string Specs { get; set; }
 
-        public string ProducerName { get; set; }
+        public required string ProducerName { get; set; }
 
         public int? BigPack { get; set; }
 
@@ -25,19 +25,17 @@ namespace WorkerService1.Models
 
         public int? StockAmount { get; set; }
 
-        [Column(TypeName = "date")]
-        public DateTime? ProductDate { get; set; }
+        public DateOnly? ProductDate { get; set; }
 
-        [Column(TypeName = "date")]
-        public DateTime? Expiry { get; set; }
+        public DateOnly? Expiry { get; set; }
 
-        public string? SaleTip { get; set; }
+        public string? Message { get; set; }
 
-        public string? SellTip { get; set; }
+        public bool IsBanned { get; set; }
 
         public string? Unit { get; set; }
 
-        public string Url { get; set; }
+        public required string Url { get; set; }
 
         [ForeignKey("PlatformId")]
         public int PlatformId { get; set; }

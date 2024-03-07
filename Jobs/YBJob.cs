@@ -10,17 +10,9 @@ using WorkerService1.Models;
 namespace WorkerService1.Jobs
 {
     [DisallowConcurrentExecution]
-    public class YBJob : IJob
+    public class YBJob(IHttpClientFactory httpClientFactory, IDbContextFactory<ERPContext> ERPContextFactory) : IJob
     {
-        private readonly IHttpClientFactory _httpClientFactory;
-
-        private readonly IDbContextFactory<ERPContext> _ERPContextFactory;
         public string? Token { get; set; }
-        public YBJob(IHttpClientFactory httpClientFactory, IDbContextFactory<ERPContext> ERPContextFactory)
-        {
-            _httpClientFactory = httpClientFactory;
-            _ERPContextFactory = ERPContextFactory;
-        }
 
         public async Task Execute(IJobExecutionContext context)
         {
@@ -30,18 +22,18 @@ namespace WorkerService1.Jobs
             NetworkManager manager = new(edgeDriver);
             manager.NetworkRequestSent += RequestHandler;
             await manager.StartMonitoring();
-            using ERPContext _context = await _ERPContextFactory.CreateDbContextAsync();
+            using ERPContext _context = await ERPContextFactory.CreateDbContextAsync();
             Models.Platform YB = new()
             {
                 Id = 8,
                 Name = "亚邦"
             };
-            if (!await _context.Platforms.ContainsAsync(YB))
+            if (!_context.Platforms.Contains(YB))
             {
-                await _context.Platforms.AddAsync(YB);
-                await _context.SaveChangesAsync();
+                _context.Platforms.Add(YB);
+                _context.SaveChanges();
             }
-            using HttpClient client = _httpClientFactory.CreateClient("YB");
+            using HttpClient client = httpClientFactory.CreateClient("YB");
             edgeDriver.Navigate().GoToUrl(client.BaseAddress + "/login");
             var username = edgeDriver.FindElement(By.XPath("/html/body/div/div[2]/div/span/div[2]/div[3]/div[2]/div[1]/input"));
             var password = edgeDriver.FindElement(By.XPath("/html/body/div/div[2]/div/span/div[2]/div[3]/div[2]/div[2]/input"));
@@ -74,8 +66,8 @@ namespace WorkerService1.Jobs
                         Unit = infoNode["unit"].ToString(),
                         Specs = infoNode["format"].ToString(),
                         Url = client.BaseAddress?.ToString() + $"productDetail?productId={infoNode["productId"]}",
-                        SellTip = string.Empty,
-                        SaleTip = string.Empty
+                        Message = string.Empty,
+                        IsBanned = false
                     };
                     if (infoNode["showPrice"] != null && decimal.TryParse(infoNode["showPrice"].ToString(), out var _price))
                     {
@@ -93,11 +85,11 @@ namespace WorkerService1.Jobs
                     {
                         product2.StockAmount = _stockAmount;
                     }
-                    if (infoNode["inventoryList"][0]["productionDate"] != null && DateTime.TryParseExact(infoNode["inventoryList"][0]["productionDate"].ToString(), "yyyy-MM-dd 00:00:00", CultureInfo.CurrentCulture, DateTimeStyles.None, out var _productdate))
+                    if (infoNode["inventoryList"][0]["productionDate"] != null && DateOnly.TryParseExact(infoNode["inventoryList"][0]["productionDate"].ToString(), "yyyy-MM-dd 00:00:00", CultureInfo.CurrentCulture, DateTimeStyles.None, out var _productdate))
                     {
                         product2.ProductDate = _productdate;
                     }
-                    if (infoNode["inventoryList"][0]["endDate"] != null && DateTime.TryParseExact(infoNode["inventoryList"][0]["endDate"].ToString(), "yyyy-MM-dd", CultureInfo.CurrentCulture, DateTimeStyles.None, out var _expiry))
+                    if (infoNode["inventoryList"][0]["endDate"] != null && DateOnly.TryParseExact(infoNode["inventoryList"][0]["endDate"].ToString(), "yyyy-MM-dd", CultureInfo.CurrentCulture, DateTimeStyles.None, out var _expiry))
                     {
                         product2.Expiry = _expiry;
                     }
@@ -114,6 +106,8 @@ namespace WorkerService1.Jobs
                         _product.ProductDate = product.ProductDate;
                         _product.StockAmount = product.StockAmount;
                         _product.Url = _product.Url;
+                        _product.Message = product.Message;
+                        _product.IsBanned = product.IsBanned;
                     }
                     else
                     {

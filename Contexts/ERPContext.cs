@@ -3,16 +3,11 @@ using WorkerService1.Models;
 
 namespace WorkerService1.Contexts
 {
-    public class ERPContext : DbContext
+    public class ERPContext(DbContextOptions<ERPContext> options) : DbContext(options)
     {
         public DbSet<Product> Products { get; set; }
 
         public DbSet<Platform> Platforms { get; set; }
-
-        public ERPContext(DbContextOptions<ERPContext> options)
-            : base(options)
-        {
-        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
