@@ -1,7 +1,11 @@
-﻿namespace WorkerService1.Models
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace WorkerService1.Models
 {
     public class hhyy
     {
+        [Key]
         public string skuCode { get; set; }
 
         public string? productName { get; set; }

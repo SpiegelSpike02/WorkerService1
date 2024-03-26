@@ -10,6 +10,7 @@ using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using WorkerService1.Contexts;
 using WorkerService1.Models;
+using WorkerService1.Utils;
 
 namespace WorkerService1.Jobs
 {
@@ -43,7 +44,7 @@ namespace WorkerService1.Jobs
             StringBuilder cookieString = new();
             EdgeOptions edgeOptions = new() { PageLoadStrategy = PageLoadStrategy.Normal };
             edgeOptions.AddArgument("--headless=new");
-            EdgeDriver driver = new(edgeOptions);
+            using EdgeDriver driver = new(edgeOptions);
             driver.Navigate().GoToUrl("https://hhey.shaphar.com/");
             var userName = driver.FindElement(By.XPath("//*[@id=\"userName\"]"));
             userName.SendKeys("xzhx");
@@ -151,6 +152,22 @@ namespace WorkerService1.Jobs
                         else
                         {
                             _context.Products.Add(product);
+                        }
+
+                        hhyy hhyy = DataConverter.Convert(product);
+                        if (_context.hhyys.AsNoTracking().Any(x => x.skuCode.Equals(hhyy.skuCode)))
+                        {
+                            var _hhyy = _context.hhyys.First(x => x.skuCode.Equals(hhyy.skuCode));
+                            _hhyy.stockState = hhyy.stockState;
+                            _hhyy.price = hhyy.price;
+                            _hhyy.approvalNO = hhyy.approvalNO;
+                            _hhyy.amount = hhyy.amount;
+                            _hhyy.url = hhyy.url;
+                            _hhyy.noSellTip = hhyy.noSellTip;
+                        }
+                        else
+                        {
+                            _context.hhyys.Add(hhyy);
                         }
                     }
                     _context.SaveChanges();

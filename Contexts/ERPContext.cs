@@ -9,6 +9,8 @@ namespace WorkerService1.Contexts
 
         public DbSet<Platform> Platforms { get; set; }
 
+        public DbSet<hhyy> hhyys { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using WorkerService1.Contexts;
 using WorkerService1.Models;
+using WorkerService1.Utils;
 
 namespace WorkerService1.Jobs
 {
@@ -28,9 +29,9 @@ namespace WorkerService1.Jobs
             using HttpClient client = httpClientFactory.CreateClient("LQ");
             FormUrlEncodedContent content = new(new KeyValuePair<string, string>[3]
                 {
-                new KeyValuePair<string, string>("username", "14639"),
-                new KeyValuePair<string, string>("userpass", "123456"),
-                new KeyValuePair<string, string>("do", "login")
+                new("username", "14639"),
+                new("userpass", "123456"),
+                new("do", "login")
                 });
             content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
             await client.PostAsync("login.html", content);
@@ -173,6 +174,22 @@ namespace WorkerService1.Jobs
                     else
                     {
                         _context.Products.Add(product);
+                    }
+
+                    hhyy hhyy = DataConverter.Convert(product);
+                    if (_context.hhyys.AsNoTracking().Any(x => x.skuCode.Equals(hhyy.skuCode)))
+                    {
+                        var _hhyy = _context.hhyys.First(x => x.skuCode.Equals(hhyy.skuCode));
+                        _hhyy.stockState = hhyy.stockState;
+                        _hhyy.price = hhyy.price;
+                        _hhyy.approvalNO = hhyy.approvalNO;
+                        _hhyy.amount = hhyy.amount;
+                        _hhyy.url = hhyy.url;
+                        _hhyy.noSellTip = hhyy.noSellTip;
+                    }
+                    else
+                    {
+                        _context.hhyys.Add(hhyy);
                     }
                 }
                 _context.SaveChanges();

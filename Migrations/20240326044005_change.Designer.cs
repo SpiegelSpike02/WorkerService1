@@ -12,7 +12,7 @@ using WorkerService1.Contexts;
 namespace WorkerService1.Migrations
 {
     [DbContext(typeof(ERPContext))]
-    [Migration("20240127081150_change")]
+    [Migration("20240326044005_change")]
     partial class change
     {
         /// <inheritdoc />
@@ -20,7 +20,7 @@ namespace WorkerService1.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.1")
+                .HasAnnotation("ProductVersion", "8.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -99,6 +99,67 @@ namespace WorkerService1.Migrations
                     b.HasIndex("PlatformId");
 
                     b.ToTable("Products");
+                });
+
+            modelBuilder.Entity("WorkerService1.Models.hhyy", b =>
+                {
+                    b.Property<string>("skuCode")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("amount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("approvalNO")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("bigPackAmount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("factoryName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("isdeleted")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("middlePackAmount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("noSellTip")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("price")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("priceTip")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("productName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("saleTag")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("source")
+                        .HasColumnType("int");
+
+                    b.Property<string>("spec")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("stockState")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("units")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("url")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("skuCode");
+
+                    b.ToTable("hhyys");
                 });
 
             modelBuilder.Entity("WorkerService1.Models.Product", b =>

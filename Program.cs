@@ -22,10 +22,6 @@ IHost host = Host.CreateDefaultBuilder(args)
             options.EnableSensitiveDataLogging();
         });
 
-        services.AddDbContextFactory<KSOAContext>(options =>
-        {
-            options.EnableSensitiveDataLogging();
-        });
         services.AddQuartz(q =>
         {
 
@@ -68,15 +64,6 @@ IHost host = Host.CreateDefaultBuilder(args)
             q.ScheduleJob<LQJob>(trigger =>
             {
                 trigger.WithIdentity("LQTrigger").StartNow().WithSimpleSchedule(x =>
-                {
-                    x.WithIntervalInHours(3).RepeatForever();
-                })
-                    .WithDescription("my awesome trigger configured for a job with single call");
-            });
-
-            q.ScheduleJob<SyncJob>(trigger =>
-            {
-                trigger.WithIdentity("SyncTrigger").StartNow().WithSimpleSchedule(x =>
                 {
                     x.WithIntervalInHours(3).RepeatForever();
                 })
